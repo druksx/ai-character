@@ -1,9 +1,5 @@
-import Image from "next/image";
+import { ChatInterface } from '@/components/chat/chat-interface'
 
 export default function Home() {
-  return (
-    <div>
-      <h1>Welcome to AI Character</h1>
-    </div>
-  );
+  return <ChatInterface />
 }
