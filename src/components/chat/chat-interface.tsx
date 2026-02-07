@@ -1,38 +1,119 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { useRef, useEffect, useCallback } from 'react'
+import { DefaultChatTransport } from 'ai'
+import { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { SousChefMessage } from '@/lib/ai/types'
 import { MessageList } from './message-list'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, Square } from 'lucide-react'
+import { ArrowUp, Square, Menu, PanelLeft } from 'lucide-react'
 
-export function ChatInterface() {
-  const { messages, sendMessage, status, stop, error } = useChat<SousChefMessage>()
+interface ChatInterfaceProps {
+  conversationId: string | null
+  initialMessages: SousChefMessage[] | null
+  onConversationCreated: (id: string) => void
+  onOpenSidebar: () => void
+  onOpenMobileSidebar: () => void
+  onSaveRecipe: (recipe: Record<string, unknown>) => void
+  onTitleGenerated?: (id: string, title: string) => void
+}
+
+export function ChatInterface({
+  conversationId: initialConversationId,
+  initialMessages,
+  onConversationCreated,
+  onOpenSidebar,
+  onOpenMobileSidebar,
+  onSaveRecipe,
+  onTitleGenerated,
+}: ChatInterfaceProps) {
+  const conversationIdRef = useRef<string | null>(initialConversationId)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        body: () => ({ conversationId: conversationIdRef.current }),
+      }),
+    [],
+  )
+
+  const { messages, sendMessage, status, stop, error } =
+    useChat<SousChefMessage>({
+      transport,
+      messages: initialMessages ?? undefined,
+    })
+
   const isStreaming = status === 'streaming' || status === 'submitted'
+  const prevStatusRef = useRef(status)
+  const titleGeneratedRef = useRef(!!initialMessages)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  // Generate AI title after the first assistant response
+  useEffect(() => {
+    const prev = prevStatusRef.current
+    prevStatusRef.current = status
+    if ((prev === 'streaming' || prev === 'submitted') && status === 'ready') {
+      if (!titleGeneratedRef.current && conversationIdRef.current) {
+        titleGeneratedRef.current = true
+        const userMsg = messages.find((m) => m.role === 'user')
+        const text = userMsg?.parts
+          .filter((p): p is Extract<typeof p, { type: 'text' }> => p.type === 'text')
+          .map((p) => p.text)
+          .join(' ')
+        if (text) {
+          const id = conversationIdRef.current
+          fetch(`/api/conversations/${id}/title`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text }),
+          })
+            .then((res) => res.json())
+            .then(({ title }) => {
+              if (title) onTitleGenerated?.(id, title)
+            })
+            .catch(() => {})
+        }
+      }
+    }
+  }, [status, messages, onTitleGenerated])
+
+  async function ensureConversation(text: string): Promise<void> {
+    if (conversationIdRef.current) return
+    const title = text.length > 30 ? text.slice(0, 28) + '...' : text
+    const res = await fetch('/api/conversations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title }),
+    })
+    const conversation = await res.json()
+    conversationIdRef.current = conversation.id
+    onConversationCreated(conversation.id)
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
+    const form = e.currentTarget
     const text = inputRef.current?.value.trim()
     if (!text || isStreaming) return
 
+    await ensureConversation(text)
     sendMessage({ role: 'user', parts: [{ type: 'text', text }] })
-    e.currentTarget.reset()
+    form.reset()
     if (inputRef.current) inputRef.current.style.height = 'auto'
     inputRef.current?.focus()
   }
 
   const handleSuggestion = useCallback(
-    (suggestion: string) => {
+    async (suggestion: string) => {
+      await ensureConversation(suggestion)
       sendMessage({ role: 'user', parts: [{ type: 'text', text: suggestion }] })
     },
-    [sendMessage]
+    [sendMessage, onConversationCreated],
   )
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -52,6 +133,26 @@ export function ChatInterface() {
     <div className="flex h-dvh flex-col">
       <header className="border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+          {/* Desktop: toggle floating sidebar */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onOpenSidebar}
+            className="hidden shrink-0 text-muted-foreground hover:text-foreground md:flex"
+            aria-label="Toggle sidebar"
+          >
+            <PanelLeft className="size-5" />
+          </Button>
+          {/* Mobile: open sheet sidebar */}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onOpenMobileSidebar}
+            className="shrink-0 text-muted-foreground hover:text-foreground md:hidden"
+            aria-label="Open sidebar"
+          >
+            <Menu className="size-5" />
+          </Button>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <span className="text-xl" aria-hidden="true">👨‍🍳</span>
           </div>
@@ -68,6 +169,7 @@ export function ChatInterface() {
             messages={messages}
             status={status}
             onSuggestion={handleSuggestion}
+            onSaveRecipe={onSaveRecipe}
           />
           <div ref={bottomRef} />
         </div>
