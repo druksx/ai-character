@@ -1,6 +1,13 @@
 'use client'
 
 import type { SousChefMessage } from '@/lib/ai/types'
+import { MessageResponse } from '@/components/ai-elements/message'
+import {
+  Reasoning,
+  ReasoningTrigger,
+  ReasoningContent,
+} from '@/components/ai-elements/reasoning'
+import { Shimmer } from '@/components/ai-elements/shimmer'
 import { RecipeCard } from '@/components/tools/recipe-card'
 import { NutritionLabel } from '@/components/tools/nutrition-label'
 import { SubstitutionCard } from '@/components/tools/substitution-card'
@@ -10,7 +17,16 @@ type Part = SousChefMessage['parts'][number]
 export function MessagePart({ part }: { part: Part }) {
   switch (part.type) {
     case 'text':
-      return <p className="whitespace-pre-wrap">{part.text}</p>
+      return <MessageResponse>{part.text}</MessageResponse>
+
+    case 'reasoning':
+      if (part.state !== 'streaming' && !part.text) return null
+      return (
+        <Reasoning isStreaming={part.state === 'streaming'}>
+          <ReasoningTrigger />
+          {part.text && <ReasoningContent>{part.text}</ReasoningContent>}
+        </Reasoning>
+      )
 
     case 'tool-getRecipe':
       if (part.state === 'input-available' || part.state === 'output-available') {
@@ -38,8 +54,7 @@ export function MessagePart({ part }: { part: Part }) {
 function ToolLoading() {
   return (
     <div className="flex items-center gap-2 text-sm text-muted-foreground" aria-live="polite">
-      <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-      Preparing...
+      <Shimmer duration={1.5}>Preparing...</Shimmer>
     </div>
   )
 }

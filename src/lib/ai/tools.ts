@@ -1,6 +1,11 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 
+// Tools use Generative UI pattern: the model generates structured data as input,
+// the client renders it as a card, and execute returns a minimal ack so the model
+// can follow up with a comment. Without execute, tool parts stay in
+// 'input-available' state and cause MissingToolResultsError on follow-up messages.
+
 export const getRecipe = tool({
   description: 'Generate a complete structured recipe. Call this when the user asks for a recipe or what to cook with specific ingredients.',
   inputSchema: z.object({
@@ -17,6 +22,7 @@ export const getRecipe = tool({
     })),
     steps: z.array(z.string()),
   }),
+  execute: async () => ({ success: true }),
 })
 
 export const calculateNutrition = tool({
@@ -31,6 +37,7 @@ export const calculateNutrition = tool({
     fiber: z.number(),
     sugar: z.number(),
   }),
+  execute: async () => ({ success: true }),
 })
 
 export const substituteIngredient = tool({
@@ -45,6 +52,7 @@ export const substituteIngredient = tool({
       quality: z.enum(['perfect', 'good', 'acceptable']),
     })),
   }),
+  execute: async () => ({ success: true }),
 })
 
 export const tools = {
