@@ -155,7 +155,3 @@ AI_GATEWAY_API_KEY=your-api-key
 ```
 
 Run `supabase/migrations/*.sql` in order against your Supabase project, then `npm run dev`.
-
-### Deploy to Vercel
-
-Zero config: `npx vercel --prod`. Or connect the repo in the Vercel dashboard and set the three env vars in Settings > Environment Variables.
