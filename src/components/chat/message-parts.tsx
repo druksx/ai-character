@@ -14,7 +14,12 @@ import { SubstitutionCard } from '@/components/tools/substitution-card'
 
 type Part = SousChefMessage['parts'][number]
 
-export function MessagePart({ part }: { part: Part }) {
+interface MessagePartProps {
+  part: Part
+  onSaveRecipe?: (recipe: Record<string, unknown>) => void
+}
+
+export function MessagePart({ part, onSaveRecipe }: MessagePartProps) {
   switch (part.type) {
     case 'text':
       return <MessageResponse>{part.text}</MessageResponse>
@@ -30,7 +35,12 @@ export function MessagePart({ part }: { part: Part }) {
 
     case 'tool-getRecipe':
       if (part.state === 'input-available' || part.state === 'output-available') {
-        return <RecipeCard {...part.input} />
+        return (
+          <RecipeCard
+            {...part.input}
+            onSave={onSaveRecipe ? () => onSaveRecipe(part.input) : undefined}
+          />
+        )
       }
       return <ToolLoading />
 

@@ -17,10 +17,12 @@ export function MessageList({
   messages,
   status,
   onSuggestion,
+  onSaveRecipe,
 }: {
   messages: SousChefMessage[]
   status: string
   onSuggestion: (suggestion: string) => void
+  onSaveRecipe?: (recipe: Record<string, unknown>) => void
 }) {
   if (messages.length === 0) {
     return (
@@ -62,7 +64,7 @@ export function MessageList({
                 ))
             ) : (
               message.parts.map((part, i) => (
-                <MessagePart key={i} part={part} />
+                <MessagePart key={i} part={part} onSaveRecipe={onSaveRecipe} />
               ))
             )}
           </MessageContent>

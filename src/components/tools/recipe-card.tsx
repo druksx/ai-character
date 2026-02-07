@@ -1,8 +1,10 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Clock, ChefHat, Users, Flame } from 'lucide-react'
+import { Clock, ChefHat, Users, Flame, Bookmark } from 'lucide-react'
+import { useState } from 'react'
 
 interface RecipeCardProps {
   name: string
@@ -13,6 +15,7 @@ interface RecipeCardProps {
   servings: number
   ingredients: { item: string; quantity: string; unit: string }[]
   steps: string[]
+  onSave?: () => void
 }
 
 const difficultyConfig = {
@@ -26,8 +29,14 @@ function ucfirst(s: string) {
 }
 
 export function RecipeCard(props: RecipeCardProps) {
+  const [saved, setSaved] = useState(false)
   const totalTime = props.prepTimeMinutes + props.cookTimeMinutes
   const config = difficultyConfig[props.difficulty]
+
+  function handleSave() {
+    props.onSave?.()
+    setSaved(true)
+  }
 
   return (
     <div className="w-full max-w-lg overflow-hidden rounded-xl border border-primary/15 bg-card shadow-sm">
@@ -89,6 +98,24 @@ export function RecipeCard(props: RecipeCardProps) {
           ))}
         </ol>
       </div>
+
+      {props.onSave && (
+        <>
+          <Separator className="mx-5 w-auto" />
+          <div className="px-5 py-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSave}
+              disabled={saved}
+              className="w-full gap-2"
+            >
+              <Bookmark className={`size-4 ${saved ? 'fill-current' : ''}`} />
+              {saved ? 'Saved!' : 'Save Recipe'}
+            </Button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
