@@ -35,9 +35,10 @@ create or replace function get_popular_categories(limit_count int default 5)
 returns table (cuisine text, recipe_count int) as $$
 begin
   return query
-    select rs.cuisine, rs.recipe_count
-    from recipe_stats rs
-    order by rs.recipe_count desc
+    select sr.cuisine, count(*)::int as recipe_count
+    from saved_recipes sr
+    group by sr.cuisine
+    order by recipe_count desc
     limit limit_count;
 end;
 $$ language plpgsql;

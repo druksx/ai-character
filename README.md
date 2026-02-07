@@ -57,7 +57,7 @@ Client receives parts → MessagePart dispatcher renders:
 
 ## SQL Logic
 
-Three custom SQL functions in `supabase/migrations/001_functions_and_triggers.sql`.
+Custom SQL in `supabase/migrations/001_functions_and_triggers.sql`.
 
 ### Trigger: auto-update conversation timestamps
 
@@ -78,52 +78,15 @@ create trigger on_message_inserted
 
 The sidebar sorts conversations by `updated_at`. The trigger keeps it in sync automatically on every message insert, no application code needed.
 
-### Trigger: aggregate recipe stats by cuisine
+### Client-side cuisine stats
 
-```sql
-create or replace function update_recipe_stats()
-returns trigger as $$
-begin
-  insert into recipe_stats (cuisine, recipe_count, updated_at)
-  values (NEW.cuisine, 1, now())
-  on conflict (cuisine)
-  do update set
-    recipe_count = recipe_stats.recipe_count + 1,
-    updated_at = now();
-  return NEW;
-end;
-$$ language plpgsql;
-
-create trigger on_recipe_saved
-  after insert on saved_recipes
-  for each row execute function update_recipe_stats();
-```
-
-The `/recipes` page shows "Top Cuisines" stats. Instead of `COUNT(*) GROUP BY` on every page load, we maintain a pre-aggregated `recipe_stats` table. The trigger uses upsert (`ON CONFLICT ... DO UPDATE`) to increment the counter atomically.
-
-### RPC: get popular categories
-
-```sql
-create or replace function get_popular_categories(limit_count int default 5)
-returns table (cuisine text, recipe_count int) as $$
-begin
-  return query
-    select rs.cuisine, rs.recipe_count
-    from recipe_stats rs
-    order by rs.recipe_count desc
-    limit limit_count;
-end;
-$$ language plpgsql;
-```
-
-Exposed as a Supabase RPC so the server component calls `supabase.rpc('get_popular_categories', { limit_count: 8 })`. Powers the "Top Cuisines" badges on the saved recipes page.
+The `/recipes` page shows "Top Cuisines" badges with counts. Stats are computed client-side from the recipes array using `useMemo`, so they update instantly when a recipe is deleted. No server round-trip or materialized counter table needed for this dataset size.
 
 ### Schema choices
 
 - **No Postgres ENUMs**: `text` + `CHECK` constraints instead. Easier to evolve.
 - **Public RLS**: `using (true) with check (true)` on all tables. No auth wall.
 - **JSONB for nested data**: `ingredients` and `steps` stored as `jsonb`, matching the Zod schema shape directly.
-- **Trigger-based aggregation**: `recipe_stats` is a materialized counter table, not a view. O(1) reads.
 
 ## Stack
 
@@ -137,6 +100,10 @@ Exposed as a Supabase RPC so the server component calls `supabase.rpc('get_popul
 | Styling | Tailwind CSS v4, warm amber oklch theme |
 | Components | Radix UI via shadcn/ui |
 | Validation | Zod v4 |
+
+## Development
+
+This project was built with AI assistance (Claude Code) and guided by [react-best-practices](https://github.com/anthropics/react-best-practices) to deliver clean, idiomatic React and Next.js code. The codebase follows Server Components by default, colocates client state close to where it's needed, avoids prop drilling, and uses `useMemo`/`useCallback` where appropriate for derived data and stable references.
 
 ## Getting Started
 

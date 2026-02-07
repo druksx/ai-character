@@ -121,13 +121,3 @@ export async function listSavedRecipes(): Promise<SavedRecipeRow[]> {
   return data ?? []
 }
 
-export async function getPopularCategories(
-  limit = 5,
-): Promise<{ cuisine: string; recipe_count: number }[]> {
-  const supabase = createServerClient()
-  const { data, error } = await supabase.rpc('get_popular_categories', {
-    limit_count: limit,
-  })
-  if (error) throw error
-  return data ?? []
-}

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { listSavedRecipes, getPopularCategories } from '@/lib/supabase/queries'
+import { listSavedRecipes } from '@/lib/supabase/queries'
 import { RecipesView } from '@/components/recipes/recipes-view'
 import { ArrowLeft, Bookmark } from 'lucide-react'
 
@@ -12,10 +12,7 @@ export const metadata: Metadata = {
 }
 
 export default async function RecipesPage() {
-  const [recipes, stats] = await Promise.all([
-    listSavedRecipes(),
-    getPopularCategories(8),
-  ])
+  const recipes = await listSavedRecipes()
 
   return (
     <div className="min-h-dvh bg-background">
@@ -43,7 +40,7 @@ export default async function RecipesPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <RecipesView initialRecipes={recipes} stats={stats} />
+        <RecipesView initialRecipes={recipes} />
       </main>
     </div>
   )

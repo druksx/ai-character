@@ -16,10 +16,9 @@ import type { SavedRecipeRow } from '@/lib/supabase/types'
 
 interface RecipesViewProps {
   initialRecipes: SavedRecipeRow[]
-  stats: { cuisine: string; recipe_count: number }[]
 }
 
-export function RecipesView({ initialRecipes, stats }: RecipesViewProps) {
+export function RecipesView({ initialRecipes }: RecipesViewProps) {
   const [recipes, setRecipes] = useState(initialRecipes)
   const [cuisineFilter, setCuisineFilter] = useState<string>('all')
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all')
@@ -28,6 +27,17 @@ export function RecipesView({ initialRecipes, stats }: RecipesViewProps) {
     () => [...new Set(recipes.map((r) => r.cuisine))].sort(),
     [recipes],
   )
+
+  const stats = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const r of recipes) {
+      counts.set(r.cuisine, (counts.get(r.cuisine) ?? 0) + 1)
+    }
+    return [...counts.entries()]
+      .map(([cuisine, recipe_count]) => ({ cuisine, recipe_count }))
+      .sort((a, b) => b.recipe_count - a.recipe_count)
+      .slice(0, 8)
+  }, [recipes])
 
   const filtered = useMemo(
     () =>
@@ -44,12 +54,19 @@ export function RecipesView({ initialRecipes, stats }: RecipesViewProps) {
     try {
       const res = await fetch(`/api/recipes/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      setRecipes((prev) => prev.filter((r) => r.id !== id))
+      setRecipes((prev) => {
+        const next = prev.filter((r) => r.id !== id)
+        // Reset cuisine filter if the deleted recipe was the last of its cuisine
+        if (cuisineFilter !== 'all' && !next.some((r) => r.cuisine === cuisineFilter)) {
+          setCuisineFilter('all')
+        }
+        return next
+      })
       toast.success(`"${name}" deleted`)
     } catch {
       toast.error('Could not delete recipe')
     }
-  }, [])
+  }, [cuisineFilter])
 
   return (
     <div className="space-y-8">

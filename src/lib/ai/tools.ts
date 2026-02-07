@@ -10,7 +10,7 @@ export const getRecipe = tool({
   description: 'Generate a complete structured recipe. Call this when the user asks for a recipe or what to cook with specific ingredients.',
   inputSchema: z.object({
     name: z.string(),
-    cuisine: z.string(),
+    cuisine: z.string().describe('Cuisine name, always in English (e.g. "Italian", "Japanese", "French")'),
     difficulty: z.enum(['easy', 'medium', 'hard']),
     prepTimeMinutes: z.number(),
     cookTimeMinutes: z.number(),
