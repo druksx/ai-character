@@ -1,5 +1,5 @@
 import { createServerClient } from './server'
-import type { ConversationRow, MessageRow } from './types'
+import type { ConversationRow, MessageRow, SavedRecipeRow } from './types'
 
 export async function createConversation(title: string = 'New Conversation'): Promise<ConversationRow> {
   const supabase = createServerClient()
@@ -101,4 +101,25 @@ export async function saveRecipe(
     .single()
   if (error) throw error
   return data.id
+}
+
+export async function listSavedRecipes(): Promise<SavedRecipeRow[]> {
+  const supabase = createServerClient()
+  const { data, error } = await supabase
+    .from('saved_recipes')
+    .select()
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getPopularCategories(
+  limit = 5,
+): Promise<{ cuisine: string; recipe_count: number }[]> {
+  const supabase = createServerClient()
+  const { data, error } = await supabase.rpc('get_popular_categories', {
+    limit_count: limit,
+  })
+  if (error) throw error
+  return data ?? []
 }
