@@ -6,7 +6,8 @@ import { useRef, useEffect, useCallback, useMemo } from 'react'
 import type { SousChefMessage } from '@/lib/ai/types'
 import { MessageList } from './message-list'
 import { Button } from '@/components/ui/button'
-import { ArrowUp, Square, Menu, PanelLeft } from 'lucide-react'
+import { ArrowUp, Square, Menu, PanelLeft, Bookmark } from 'lucide-react'
+import Link from 'next/link'
 
 interface ChatInterfaceProps {
   conversationId: string | null
@@ -156,10 +157,17 @@ export function ChatInterface({
           <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
             <span className="text-xl" aria-hidden="true">👨‍🍳</span>
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-base font-semibold leading-tight">Le Sous-Chef</h1>
             <p className="truncate text-xs text-muted-foreground">Your passionate French culinary advisor</p>
           </div>
+          <Link
+            href="/recipes"
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+            aria-label="Saved recipes"
+          >
+            <Bookmark className="size-4" />
+          </Link>
         </div>
       </header>
 
