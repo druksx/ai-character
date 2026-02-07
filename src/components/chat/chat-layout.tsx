@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
+import { toast } from 'sonner'
 import { useConversations } from '@/hooks/use-conversations'
 import { ConversationSidebar } from '@/components/sidebar/conversation-sidebar'
 import { ChatInterface } from './chat-interface'
@@ -27,16 +28,21 @@ export function ChatLayout() {
     setActiveId(id)
     setSidebarOpen(false)
     setMobileSheetOpen(false)
-    const res = await fetch(`/api/conversations/${id}`)
-    const dbMessages: MessageRow[] = await res.json()
-    const uiMessages: SousChefMessage[] = dbMessages.map((m) => ({
-      id: m.id,
-      role: m.role,
-      parts: JSON.parse(m.content),
-    }))
-    setLoadedMessages(uiMessages)
-    chatKeyRef.current += 1
-    setChatKey(chatKeyRef.current)
+    try {
+      const res = await fetch(`/api/conversations/${id}`)
+      if (!res.ok) throw new Error()
+      const dbMessages: MessageRow[] = await res.json()
+      const uiMessages: SousChefMessage[] = dbMessages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        parts: JSON.parse(m.content),
+      }))
+      setLoadedMessages(uiMessages)
+      chatKeyRef.current += 1
+      setChatKey(chatKeyRef.current)
+    } catch {
+      toast.error('Could not load conversation')
+    }
   }, [])
 
   const handleNew = useCallback(() => {
@@ -73,11 +79,17 @@ export function ChatLayout() {
 
   const handleSaveRecipe = useCallback(
     async (recipe: Record<string, unknown>) => {
-      await fetch('/api/recipes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ conversationId: activeId, recipe }),
-      })
+      try {
+        const res = await fetch('/api/recipes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ conversationId: activeId, recipe }),
+        })
+        if (!res.ok) throw new Error()
+        toast.success('Recipe saved!')
+      } catch {
+        toast.error('Could not save recipe')
+      }
     },
     [activeId],
   )
@@ -117,7 +129,7 @@ export function ChatLayout() {
         <div
           className="absolute inset-0 z-20 hidden bg-black/5 md:block"
           onClick={() => setSidebarOpen(false)}
-          aria-hidden
+          aria-hidden="true"
         />
       )}
 

@@ -34,8 +34,10 @@ export async function updateConversationTitle(id: string, title: string): Promis
 
 export async function deleteConversation(id: string): Promise<void> {
   const supabase = createServerClient()
-  await supabase.from('messages').delete().eq('conversation_id', id)
-  await supabase.from('saved_recipes').delete().eq('conversation_id', id)
+  const { error: msgError } = await supabase.from('messages').delete().eq('conversation_id', id)
+  if (msgError) throw msgError
+  const { error: recipeError } = await supabase.from('saved_recipes').delete().eq('conversation_id', id)
+  if (recipeError) throw recipeError
   const { error } = await supabase.from('conversations').delete().eq('id', id)
   if (error) throw error
 }
