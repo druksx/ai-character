@@ -1,8 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRightLeft } from 'lucide-react'
 
 interface SubstitutionCardProps {
   original: string
@@ -16,44 +15,49 @@ interface SubstitutionCardProps {
 }
 
 const qualityConfig = {
-  perfect: { label: 'Perfect', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  good: { label: 'Good', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-  acceptable: { label: 'Acceptable', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
+  perfect: { label: 'Perfect', className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' },
+  good: { label: 'Good', className: 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300' },
+  acceptable: { label: 'Acceptable', className: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' },
 } as const
+
+function ucfirst(s: string) {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
 export function SubstitutionCard(props: SubstitutionCardProps) {
   return (
-    <Card className="w-full max-w-lg">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <span className="line-through opacity-60">{props.original}</span>
-          <ArrowRight className="size-4 text-muted-foreground" aria-hidden="true" />
-          <span>Substitutes</span>
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">{props.reason}</p>
-      </CardHeader>
-      <CardContent>
-        <ul className="grid gap-3">
-          {props.substitutes.map((sub, i) => {
-            const config = qualityConfig[sub.quality]
-            return (
-              <li key={i} className="flex items-start gap-3 rounded-md border p-3">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{sub.name}</span>
-                    <Badge variant="outline" className={config.className}>
-                      {config.label}
-                    </Badge>
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {sub.ratio} &middot; {sub.notes}
-                  </p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </CardContent>
-    </Card>
+    <div className="w-full max-w-lg overflow-hidden rounded-xl border border-primary/15 bg-card shadow-sm">
+      <div className="flex items-center gap-3 bg-primary/5 px-5 py-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <ArrowRightLeft className="size-5 text-primary" aria-hidden="true" />
+        </div>
+        <div className="min-w-0">
+          <h3 className="font-semibold leading-tight">
+            Substitutes for <span className="text-primary">{ucfirst(props.original)}</span>
+          </h3>
+          <p className="text-xs text-muted-foreground">{ucfirst(props.reason)}</p>
+        </div>
+      </div>
+
+      <ul className="grid gap-2 px-5 py-4">
+        {props.substitutes.map((sub, i) => {
+          const config = qualityConfig[sub.quality]
+          return (
+            <li key={i} className="rounded-lg bg-muted/50 p-3">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm">{ucfirst(sub.name)}</span>
+                <Badge variant="outline" className={config.className}>
+                  {config.label}
+                </Badge>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                <span className="font-medium text-foreground/70">{ucfirst(sub.ratio)}</span>
+                {' '}&middot;{' '}{ucfirst(sub.notes)}
+              </p>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
   )
 }

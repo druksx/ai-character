@@ -1,6 +1,7 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { Apple } from 'lucide-react'
 
 interface NutritionLabelProps {
   dishName: string
@@ -13,43 +14,80 @@ interface NutritionLabelProps {
   sugar: number
 }
 
-function Row({ label, value, unit = 'g', bold = false }: { label: string; value: number; unit?: string; bold?: boolean }) {
+function MacroBar({ label, value, unit = 'g', color, max }: {
+  label: string
+  value: number
+  unit?: string
+  color: string
+  max: number
+}) {
+  const pct = Math.min((value / max) * 100, 100)
   return (
-    <div className={`flex justify-between py-1 ${bold ? 'font-bold' : ''}`}>
+    <div className="space-y-1">
+      <div className="flex justify-between text-sm">
+        <span className="font-medium">{label}</span>
+        <span className="tabular-nums text-muted-foreground">{value}{unit}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full transition-all ${color}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function Row({ label, value, unit = 'g', indent = false }: {
+  label: string
+  value: number
+  unit?: string
+  indent?: boolean
+}) {
+  return (
+    <div className={`flex justify-between py-1 text-sm ${indent ? 'pl-4 text-muted-foreground' : ''}`}>
       <span>{label}</span>
-      <span>{value}{unit}</span>
+      <span className="tabular-nums">{value}{unit}</span>
     </div>
   )
 }
 
 export function NutritionLabel(props: NutritionLabelProps) {
+  const maxMacro = Math.max(props.protein, props.carbs, props.fat, 1)
+
   return (
-    <Card className="w-full max-w-xs font-mono">
-      <CardHeader className="pb-1">
-        <CardTitle className="text-lg">Nutrition Facts</CardTitle>
-        <p className="text-xs text-muted-foreground">{props.dishName}</p>
-      </CardHeader>
-      <CardContent className="space-y-0 text-sm">
-        <div className="border-b-4 border-foreground pb-1 text-xs text-muted-foreground">
-          Serving size: {props.servingSize}
+    <div className="w-full max-w-sm overflow-hidden rounded-xl border border-primary/15 bg-card shadow-sm">
+      <div className="flex items-center gap-3 bg-primary/5 px-5 py-4">
+        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+          <Apple className="size-5 text-primary" aria-hidden="true" />
         </div>
-        <div className="border-b-8 border-foreground py-1">
-          <div className="text-xs">Amount per serving</div>
-          <div className="flex justify-between text-2xl font-black">
-            <span>Calories</span>
-            <span>{props.calories}</span>
-          </div>
+        <div className="min-w-0">
+          <h3 className="font-semibold leading-tight">{props.dishName}</h3>
+          <p className="text-xs text-muted-foreground">{props.servingSize} per serving</p>
         </div>
-        <div className="divide-y text-sm">
-          <Row label="Total Fat" value={props.fat} bold />
-          <Row label="Total Carbs" value={props.carbs} bold />
-          <div className="pl-4">
-            <Row label="Dietary Fiber" value={props.fiber} />
-            <Row label="Sugars" value={props.sugar} />
-          </div>
-          <Row label="Protein" value={props.protein} bold />
+      </div>
+
+      <div className="px-5 py-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-sm text-muted-foreground">Calories</span>
+          <span className="text-3xl font-bold tabular-nums">{props.calories}</span>
         </div>
-      </CardContent>
-    </Card>
+
+        <Separator className="my-3" />
+
+        <div className="grid gap-3">
+          <MacroBar label="Protein" value={props.protein} color="bg-amber-500" max={maxMacro} />
+          <MacroBar label="Carbs" value={props.carbs} color="bg-primary/70" max={maxMacro} />
+          <MacroBar label="Fat" value={props.fat} color="bg-rose-400" max={maxMacro} />
+        </div>
+
+        <Separator className="my-3" />
+
+        <div className="divide-y divide-border/50">
+          <Row label="Dietary Fiber" value={props.fiber} />
+          <Row label="Sugars" value={props.sugar} />
+        </div>
+      </div>
+    </div>
   )
 }
