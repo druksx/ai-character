@@ -3,7 +3,7 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { Clock, ChefHat, Users, Flame, Bookmark } from 'lucide-react'
+import { Clock, ChefHat, Users, Flame, Bookmark, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 
 interface RecipeCardProps {
@@ -16,6 +16,7 @@ interface RecipeCardProps {
   ingredients: { item: string; quantity: string; unit: string }[]
   steps: string[]
   onSave?: () => void
+  onDelete?: () => void
 }
 
 const difficultyConfig = {
@@ -99,20 +100,33 @@ export function RecipeCard(props: RecipeCardProps) {
         </ol>
       </div>
 
-      {props.onSave && (
+      {(props.onSave || props.onDelete) && (
         <>
           <Separator className="mx-5 w-auto" />
-          <div className="px-5 py-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSave}
-              disabled={saved}
-              className="w-full gap-2"
-            >
-              <Bookmark className={`size-4 ${saved ? 'fill-current' : ''}`} />
-              {saved ? 'Saved!' : 'Save Recipe'}
-            </Button>
+          <div className="flex gap-2 px-5 py-3">
+            {props.onSave && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={saved}
+                className="flex-1 gap-2"
+              >
+                <Bookmark className={`size-4 ${saved ? 'fill-current' : ''}`} />
+                {saved ? 'Saved!' : 'Save Recipe'}
+              </Button>
+            )}
+            {props.onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={props.onDelete}
+                className="gap-2 text-muted-foreground hover:border-destructive/50 hover:text-destructive"
+              >
+                <Trash2 className="size-4" />
+                Delete
+              </Button>
+            )}
           </div>
         </>
       )}

@@ -105,6 +105,12 @@ export async function saveRecipe(
   return data.id
 }
 
+export async function deleteSavedRecipe(id: string): Promise<void> {
+  const supabase = createServerClient()
+  const { error } = await supabase.from('saved_recipes').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function listSavedRecipes(): Promise<SavedRecipeRow[]> {
   const supabase = createServerClient()
   const { data, error } = await supabase

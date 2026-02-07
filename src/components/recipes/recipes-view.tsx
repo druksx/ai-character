@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { toast } from 'sonner'
 import { RecipeCard } from '@/components/tools/recipe-card'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -14,11 +15,12 @@ import { Flame } from 'lucide-react'
 import type { SavedRecipeRow } from '@/lib/supabase/types'
 
 interface RecipesViewProps {
-  recipes: SavedRecipeRow[]
+  initialRecipes: SavedRecipeRow[]
   stats: { cuisine: string; recipe_count: number }[]
 }
 
-export function RecipesView({ recipes, stats }: RecipesViewProps) {
+export function RecipesView({ initialRecipes, stats }: RecipesViewProps) {
+  const [recipes, setRecipes] = useState(initialRecipes)
   const [cuisineFilter, setCuisineFilter] = useState<string>('all')
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all')
 
@@ -37,6 +39,17 @@ export function RecipesView({ recipes, stats }: RecipesViewProps) {
       }),
     [recipes, cuisineFilter, difficultyFilter],
   )
+
+  const handleDelete = useCallback(async (id: string, name: string) => {
+    try {
+      const res = await fetch(`/api/recipes/${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      setRecipes((prev) => prev.filter((r) => r.id !== id))
+      toast.success(`"${name}" deleted`)
+    } catch {
+      toast.error('Could not delete recipe')
+    }
+  }, [])
 
   return (
     <div className="space-y-8">
@@ -107,7 +120,7 @@ export function RecipesView({ recipes, stats }: RecipesViewProps) {
         )}
       </section>
 
-      {/* Recipe Grid — items-start prevents cards from stretching to match tallest sibling */}
+      {/* Recipe Grid */}
       {filtered.length > 0 ? (
         <div className="grid items-start gap-6 sm:grid-cols-2">
           {filtered.map((r) => (
@@ -121,6 +134,7 @@ export function RecipesView({ recipes, stats }: RecipesViewProps) {
               servings={r.servings}
               ingredients={r.ingredients as RecipeCardIngredient[]}
               steps={r.steps as string[]}
+              onDelete={() => handleDelete(r.id, r.name)}
             />
           ))}
         </div>

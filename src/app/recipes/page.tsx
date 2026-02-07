@@ -43,7 +43,7 @@ export default async function RecipesPage() {
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-6">
-        <RecipesView recipes={recipes} stats={stats} />
+        <RecipesView initialRecipes={recipes} stats={stats} />
       </main>
     </div>
   )
