@@ -18,11 +18,11 @@ const sousChef = new ToolLoopAgent({
 export async function POST(req: Request) {
   const { messages, conversationId } = await req.json()
 
-  // Save the latest user message before streaming
+  // Save the latest user message (fire-and-forget, don't block streaming)
   if (conversationId) {
     const lastMessage = messages[messages.length - 1]
     if (lastMessage?.role === 'user') {
-      await saveMessage(conversationId, 'user', lastMessage.parts)
+      saveMessage(conversationId, 'user', lastMessage.parts)
     }
   }
 
