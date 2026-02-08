@@ -16,10 +16,11 @@ type Part = SousChefMessage['parts'][number]
 
 interface MessagePartProps {
   part: Part
+  savedRecipeNames?: Set<string>
   onSaveRecipe?: (recipe: Record<string, unknown>) => void
 }
 
-export function MessagePart({ part, onSaveRecipe }: MessagePartProps) {
+export function MessagePart({ part, savedRecipeNames, onSaveRecipe }: MessagePartProps) {
   switch (part.type) {
     case 'text':
       return <MessageResponse>{part.text}</MessageResponse>
@@ -35,10 +36,12 @@ export function MessagePart({ part, onSaveRecipe }: MessagePartProps) {
 
     case 'tool-getRecipe':
       if (part.state === 'input-available' || part.state === 'output-available') {
+        const alreadySaved = savedRecipeNames?.has(part.input.name) ?? false
         return (
           <RecipeCard
             {...part.input}
-            onSave={onSaveRecipe ? () => onSaveRecipe(part.input) : undefined}
+            initialSaved={alreadySaved}
+            onSave={!alreadySaved && onSaveRecipe ? () => onSaveRecipe(part.input) : undefined}
           />
         )
       }

@@ -15,6 +15,7 @@ interface RecipeCardProps {
   servings: number
   ingredients: { item: string; quantity: string; unit: string }[]
   steps: string[]
+  initialSaved?: boolean
   onSave?: () => void
   onDelete?: () => void
 }
@@ -30,7 +31,7 @@ function ucfirst(s: string) {
 }
 
 export function RecipeCard(props: RecipeCardProps) {
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved] = useState(props.initialSaved ?? false)
   const totalTime = props.prepTimeMinutes + props.cookTimeMinutes
   const config = difficultyConfig[props.difficulty]
 
@@ -100,11 +101,11 @@ export function RecipeCard(props: RecipeCardProps) {
         </ol>
       </div>
 
-      {(props.onSave || props.onDelete) && (
+      {(props.onSave || props.initialSaved || props.onDelete) && (
         <>
           <Separator className="mx-5 w-auto" />
           <div className="flex gap-2 px-5 py-3">
-            {props.onSave && (
+            {(props.onSave || saved) && (
               <Button
                 variant="outline"
                 size="sm"

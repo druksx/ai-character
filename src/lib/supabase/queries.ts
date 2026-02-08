@@ -111,6 +111,16 @@ export async function deleteSavedRecipe(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function getSavedRecipeNames(conversationId: string): Promise<string[]> {
+  const supabase = createServerClient()
+  const { data, error } = await supabase
+    .from('saved_recipes')
+    .select('name')
+    .eq('conversation_id', conversationId)
+  if (error) throw error
+  return (data ?? []).map((r) => r.name)
+}
+
 export async function listSavedRecipes(): Promise<SavedRecipeRow[]> {
   const supabase = createServerClient()
   const { data, error } = await supabase

@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
-import { getMessages, deleteConversation } from '@/lib/supabase/queries'
+import { getMessages, getSavedRecipeNames, deleteConversation } from '@/lib/supabase/queries'
 
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params
-  const messages = await getMessages(id)
-  return NextResponse.json(messages)
+  const [messages, savedRecipeNames] = await Promise.all([
+    getMessages(id),
+    getSavedRecipeNames(id),
+  ])
+  return NextResponse.json({ messages, savedRecipeNames })
 }
 
 export async function DELETE(

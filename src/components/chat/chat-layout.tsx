@@ -20,6 +20,7 @@ export function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false)
   const [loadedMessages, setLoadedMessages] = useState<SousChefMessage[] | null>(null)
+  const [savedRecipeNames, setSavedRecipeNames] = useState<Set<string>>(new Set())
   // chatKey only changes on explicit user actions (select, new, delete) — NOT on lazy creation
   const chatKeyRef = useRef(0)
   const [chatKey, setChatKey] = useState(0)
@@ -31,13 +32,17 @@ export function ChatLayout() {
     try {
       const res = await fetch(`/api/conversations/${id}`)
       if (!res.ok) throw new Error()
-      const dbMessages: MessageRow[] = await res.json()
+      const { messages: dbMessages, savedRecipeNames: names }: {
+        messages: MessageRow[]
+        savedRecipeNames: string[]
+      } = await res.json()
       const uiMessages: SousChefMessage[] = dbMessages.map((m) => ({
         id: m.id,
         role: m.role,
         parts: JSON.parse(m.content),
       }))
       setLoadedMessages(uiMessages)
+      setSavedRecipeNames(new Set(names))
       chatKeyRef.current += 1
       setChatKey(chatKeyRef.current)
     } catch {
@@ -48,6 +53,7 @@ export function ChatLayout() {
   const handleNew = useCallback(() => {
     setActiveId(null)
     setLoadedMessages(null)
+    setSavedRecipeNames(new Set())
     setSidebarOpen(false)
     setMobileSheetOpen(false)
     chatKeyRef.current += 1
@@ -79,6 +85,8 @@ export function ChatLayout() {
 
   const handleSaveRecipe = useCallback(
     async (recipe: Record<string, unknown>) => {
+      const name = recipe.name as string
+      if (savedRecipeNames.has(name)) return
       try {
         const res = await fetch('/api/recipes', {
           method: 'POST',
@@ -86,12 +94,13 @@ export function ChatLayout() {
           body: JSON.stringify({ conversationId: activeId, recipe }),
         })
         if (!res.ok) throw new Error()
+        setSavedRecipeNames((prev) => new Set(prev).add(name))
         toast.success('Recipe saved!')
       } catch {
         toast.error('Could not save recipe')
       }
     },
-    [activeId],
+    [activeId, savedRecipeNames],
   )
 
   const handleToggleSidebar = useCallback(() => {
@@ -154,6 +163,7 @@ export function ChatLayout() {
           key={chatKey}
           conversationId={activeId}
           initialMessages={loadedMessages}
+          savedRecipeNames={savedRecipeNames}
           onConversationCreated={handleConversationCreated}
           onOpenSidebar={handleToggleSidebar}
           onOpenMobileSidebar={() => setMobileSheetOpen(true)}

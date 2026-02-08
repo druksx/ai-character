@@ -12,6 +12,7 @@ import Link from 'next/link'
 interface ChatInterfaceProps {
   conversationId: string | null
   initialMessages: SousChefMessage[] | null
+  savedRecipeNames?: Set<string>
   onConversationCreated: (id: string) => void
   onOpenSidebar: () => void
   onOpenMobileSidebar: () => void
@@ -22,6 +23,7 @@ interface ChatInterfaceProps {
 export function ChatInterface({
   conversationId: initialConversationId,
   initialMessages,
+  savedRecipeNames,
   onConversationCreated,
   onOpenSidebar,
   onOpenMobileSidebar,
@@ -176,6 +178,7 @@ export function ChatInterface({
           <MessageList
             messages={messages}
             status={status}
+            savedRecipeNames={savedRecipeNames}
             onSuggestion={handleSuggestion}
             onSaveRecipe={onSaveRecipe}
           />

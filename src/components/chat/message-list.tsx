@@ -16,11 +16,13 @@ const starterSuggestions = [
 export function MessageList({
   messages,
   status,
+  savedRecipeNames,
   onSuggestion,
   onSaveRecipe,
 }: {
   messages: SousChefMessage[]
   status: string
+  savedRecipeNames?: Set<string>
   onSuggestion: (suggestion: string) => void
   onSaveRecipe?: (recipe: Record<string, unknown>) => void
 }) {
@@ -64,7 +66,7 @@ export function MessageList({
                 ))
             ) : (
               message.parts.map((part, i) => (
-                <MessagePart key={i} part={part} onSaveRecipe={onSaveRecipe} />
+                <MessagePart key={i} part={part} savedRecipeNames={savedRecipeNames} onSaveRecipe={onSaveRecipe} />
               ))
             )}
           </MessageContent>
